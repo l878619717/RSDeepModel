@@ -2,10 +2,10 @@
 
 深度学习模型（推荐场景CTR预估为背景）, 使用estimator进行封装, 包括dnn、deepfm、din、dinfm、autoint等模型.
 
-| -          | version |
-| :--------- | :-----: |
-| Python     |   3.6   |
-| TensorFlow | 1.12.0  |
+| -          | version          |
+| ---------- | ---------------- |
+| Python     | 3.6或更高版本    |
+| TensorFlow | 1.12.0或更高版本 |
 
 ***
 
@@ -14,12 +14,13 @@
 打开程序入口文件rsdeepmodel/main.py, 自定义相关参数, 直接运行即可, **本项目训练数据默认tfrecord格式**.
 
 | -              | -                                           |
-| :------------- | :------------------------------------------ |
-| 程序入口       | rsdeepmodel/main.py                         | - |
+| -------------- | ------------------------------------------- |
+| 程序入口       | rsdeepmodel/main.py                         |
 | 数据(tfrecord) | rsdeepmodel/data/tfrecord/demo/demo-*       |
 | 数据配置文件   | rsdeepmodel/data/tfrecord/demo/feats_conf/* |
-| 模型           | rsdeepmodel/models/*                        |
 | 工具函数       | rsdeepmodel/utils/*                         |
+| 模型           | rsdeepmodel/models/*                        |
+| 相关论文pdf    | docs                                        |
 
 ps: 本项目也提供了一个textline数据格式的demo(textline-model-demo/dssm_textline.py), 这里没有将数据处理、模型训练等拆分开, 所有内容都在一个脚本中, 直接运行即可.
 
@@ -36,7 +37,7 @@ ps: 本项目也提供了一个textline数据格式的demo(textline-model-demo/d
 
 与**离线spark特征构造生成训练数据**和**线上特征构造用于预测**不同, 本项目解析配置文件是为了获取训练模型所需的特征field计数以及attention相关参数的, 详情见下：
 
-```
+```py
 # 脚本路径: rsdeepmodel/utils/my_utils.py
 def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
     ...
@@ -44,21 +45,23 @@ def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
 ```
 配置文件示例见 rsdeepmodel/data/tfrecord/demo/feats_conf/*, 其中lr.conf记录单值离散和多值离散特征, dnn.conf记录连续型特征. 目前共12列, 根据自身需要进行增删, 对应更改解析配置文件脚本即可.
 
-| 序号 | 名称               | 释义                          | 示例                        | 备注                                                                                                                                                            |
-| ---- | ------------------ | ----------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | name               | 列名                          | user_id、item_id、ctx_qudao | user特征前缀user_;item特征前缀item_;ctx特征前缀ctx_;                                                                                                            |
-| 2    | new_name           | 新列名                        | none、item_id_new           | 'none'表示不更改, 如果需要修改、新增则写新列名                                                                                                                  |
-| 3    | result_type        | 新生成特征的数据类型          | string, arr, float          | 只有string、arr、float三种数据类型                                                                                                                              |
-| 4    | feature_type       | 特征类型                      | wide, deep                  | 连续型特征-deep, 离散特征-wide                                                                                                                                  |
-| 5    | handle_func        | 特征交叉方法                  | match_pos_arr_arr、none     | 如果不需要特征交叉方法则none                                                                                                                                    |
-| 6    | handle_parse       | 特征交叉方法参数              | top=10、none                | 对应上面的handle_func, 不需要则none                                                                                                                             |
-| 7    | result_func        | 特征处理方法                  | top_key_arr、normal、none   | 如果不需要特征处理方法则none                                                                                                                                    |
-| 8    | result_parse       | 特征处理参数                  | top=10、none                | 不需要则none                                                                                                                                                    |
-| 9    | is_drop            | 是否丢弃该特征                | 0、1                        | 中间结果特征可丢弃                                                                                                                                              |
-| 10   | set_id             | 特征id                        | df                          | 特征hash, 区分不同'域'的特征                                                                                                                                    |
-| 11   | taget_attention_id | 该特征训练时是否使用attention | 0、1、2...                  | 使用target-attention的两个特征使用相同非0值, 不需要attention则置0                                                                                               |
-| 12   | mask_type          | 特征hash的类型                | low、mid、high              | 将mmh3的hash结果进行mask截断, 缩减embedding特征空间；e.g. 假设mid=20, set_id最大值为5(二进制101), 此时emb空间应该为2^23=8388608, 那么emb空间初始化要大于这个值, 比如本工程用的是900万(tf.flags.DEFINE_integer("cate_emb_space_size", 9000000, "")). |
+| 序号 | 名称               | 释义                          | 示例                        | 备注                                                                     |
+| ---- | ------------------ | ----------------------------- | --------------------------- | ------------------------------------------------------------------------ |
+| 1    | name               | 列名                          | user_id, item_id, ctx_qudao | user特征前缀user_;item特征前缀item_;ctx特征前缀ctx_;                     |
+| 2    | new_name           | 新列名                        | none, item_id_new           | 'none'表示不更改, 如果需要修改、新增则写新列名                           |
+| 3    | result_type        | 新生成特征的数据类型          | string, arr, float          | 只有string、arr、float三种数据类型                                       |
+| 4    | feature_type       | 特征类型                      | wide, deep                  | 连续型特征-deep, 离散特征-wide                                           |
+| 5    | handle_func        | 特征交叉方法                  | match_pos_arr_arr, none     | 如果不需要特征交叉方法则none                                             |
+| 6    | handle_parse       | 特征交叉方法参数              | top=10, none                | 对应上面的handle_func, 不需要则none                                      |
+| 7    | result_func        | 特征处理方法                  | top_key_arr, normal, none   | 如果不需要特征处理方法则none                                             |
+| 8    | result_parse       | 特征处理参数                  | top=10, none                | 不需要则none                                                             |
+| 9    | is_drop            | 是否丢弃该特征                | 0, 1                        | 中间结果特征可丢弃                                                       |
+| 10   | set_id             | 特征id                        | 1, 2, 3...                  | 特征hash, 区分不同'域'的特征, 如item_cat1和user_click_cat1应该使用相同域 |
+| 11   | taget_attention_id | 该特征训练时是否使用attention | 0, 1, 2...                  | 使用target-attention的两个特征使用相同非0值, 不需要attention则置0        |
+| 12   | mask_type          | 特征hash的类型                | low、mid、high              | 将mmh3的hash结果进行mask截断                                             |
 
+其中第12列的mask_type, 是为了缩减embedding特征空间；e.g. 假设mid=20, set_id最大值为5(二进制101), 此时emb空间应该为2^23=8388608, 那么emb空间初始化要大于这个值, 比如本工程用的是900万(tf.flags.DEFINE_integer("cate_emb_space_size", 9000000, "")).
+***
 
 ### 2. 训练数据制作
 
@@ -82,7 +85,7 @@ def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
 
 对所有的单值、多值离散特征进行'域'hash处理, '域'即setID, 比如item_cat1和user_click_cat1应该用同一个setID, hash方法使用mmh3方法:
 
-```
+```python
 # python  线下使用, 与线上保持参数设置一致即可, 如low=16, seed=100
 
 import mmh3
@@ -111,7 +114,7 @@ def mmh3_hash(set_id, value, mask_type):
     elif mask_type == 'high':
         return set_id << high | mask_high(mmh3.hash(key=value, seed=100) & 0xffffffff)
 ```
-```
+```go
 // golang  线上使用
 
 import murmur3 //go语言的mmh3包,[下载链接:](https://github.com/spaolacci/murmur3)

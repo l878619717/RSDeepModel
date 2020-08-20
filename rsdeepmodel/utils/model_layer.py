@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*
+# -*- coding:utf-8 -*-
 '''
 功能：通用的模型内部模块，如参数初始化、embedding-pooling、target-attention、multi-heads self-attention等
 '''

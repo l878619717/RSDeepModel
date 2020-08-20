@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*
+# -*- coding:utf-8 -*-
 '''
 功能: 1.通用工具类函数 2.解析配置文件lr.conf&dnn.conf
 '''
