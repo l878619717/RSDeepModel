@@ -1,0 +1,21 @@
+#https://github.com/github/gitignore
+
+# My Config 
+.vscode
+model_save_dir
+model_save_pb
+demo-*-500M
+
+# Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+
+# Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# MacOS:
+.DS_Store
