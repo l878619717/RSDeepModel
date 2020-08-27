@@ -17,13 +17,20 @@ def arg_parse(argv):
     return parse_dict
 
 
-def venus_set_environ():
-    # venus 参数设置
-    os.environ['AWS_ACCESS_KEY_ID'] = "J2SU8BKYDQAKTKBHY1DV"
-    os.environ['AWS_SECRET_ACCESS_KEY'] = "4icFh3queHjR2jPk8U2j7qM1ekw7HpGQqkVPDgZ4"
-    os.environ['S3_ENDPOINT'] = "s3szoffline.sumeru.mig"
-    os.environ['S3_USE_HTTPS'] = '0'
-    os.environ['AWS_DEFAULT_REGION'] = 'default'
+def str_list_2_int_list(str_list):
+    int_list = list()
+    for i in str_list:
+        if type(i) == str:
+            int_list.append(int(i))
+    return int_list
+
+
+def str_list_2_float_list(str_list):
+    float_list = list()
+    for i in str_list:
+        if type(i) == str:
+            float_list.append(float(i))
+    return float_list
 
 
 def get_file_list(input_path):
