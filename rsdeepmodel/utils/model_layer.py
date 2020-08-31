@@ -37,7 +37,7 @@ def nonzero_reduce_mean(emb):  # nonzero-mean-pooling
 
 
 class InteractingLayer:  # multi-heads self-attention
-    def __init__(self, num_layer, att_emb_size=32, seed=2020, head_num=3, use_res=1):
+    def __init__(self, num_layer, w_name="default", att_emb_size=32, seed=2020, head_num=3, use_res=1):
         if head_num <= 0:
             raise ValueError('head_num must be a int > 0')
         self.num_layer = num_layer
@@ -45,6 +45,7 @@ class InteractingLayer:  # multi-heads self-attention
         self.seed = seed
         self.head_num = head_num
         self.use_res = use_res
+        self.w_name = w_name
 
     def __call__(self, inputs):
         input_shape = inputs.get_shape().as_list()
@@ -52,20 +53,20 @@ class InteractingLayer:  # multi-heads self-attention
             raise ValueError("Unexpected inputs dimensions %d, expect to be 3 dimensions" % len(input_shape))
 
         embedding_size = int(input_shape[-1])
-        self.w_query = tf.get_variable(name=str(self.num_layer) + '_query',
+        self.w_query = tf.get_variable(name=str(self.w_name) + str(self.num_layer) + '_query',
                                        dtype=tf.float32,
                                        shape=(embedding_size, self.att_emb_size * self.head_num),
                                        initializer=tf.contrib.layers.xavier_initializer(seed=self.seed))
-        self.w_key = tf.get_variable(name=str(self.num_layer) + '_key',
+        self.w_key = tf.get_variable(name=str(self.w_name) + str(self.num_layer) + '_key',
                                      dtype=tf.float32,
                                      shape=(embedding_size, self.att_emb_size * self.head_num),
                                      initializer=tf.contrib.layers.xavier_initializer(seed=self.seed + 1))
-        self.w_value = tf.get_variable(name=str(self.num_layer) + '_value',
+        self.w_value = tf.get_variable(name=str(self.w_name) + str(self.num_layer) + '_value',
                                        dtype=tf.float32,
                                        shape=(embedding_size, self.att_emb_size * self.head_num),
                                        initializer=tf.contrib.layers.xavier_initializer(seed=self.seed + 2))
         if self.use_res:
-            self.w_res = tf.get_variable(name=str(self.num_layer) + '_res',
+            self.w_res = tf.get_variable(name=str(self.w_name) + str(self.num_layer) + '_res',
                                          dtype=tf.float32,
                                          shape=(embedding_size, self.att_emb_size * self.head_num),
                                          initializer=tf.contrib.layers.xavier_initializer(seed=self.seed))

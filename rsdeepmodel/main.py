@@ -2,8 +2,8 @@
 
 import tensorflow as tf
 import shutil
-from utils import my_utils, data_load, model_op
-from models import dnn, deepfm, din, dinfm, autoint
+from utils import my_utils, data_load, model_op, data_load_dssm
+from models import dnn, deepfm, din, dinfm, autoint, dssm
 
 #################### CMD Arguments ####################
 FLAGS = tf.app.flags.FLAGS
@@ -42,17 +42,18 @@ tf.app.flags.DEFINE_string("eval_data", "data/tfrecord/demo/demo-sparse", "the p
 # ---------------parse features conf----------------
 tf.app.flags.DEFINE_string("feats_conf", "data/tfrecord/demo/feats_conf", "the path of feature config files")
 parse_feats_dict = my_utils.parse_feats_conf(FLAGS.feats_conf, FLAGS.alg_name)
+tf.app.flags.DEFINE_integer("total_field_count", parse_feats_dict["total_field_count"], "")
 tf.app.flags.DEFINE_integer("cont_field_count", parse_feats_dict["cont_field_count"], "")
 tf.app.flags.DEFINE_integer("cate_field_count", parse_feats_dict["cate_field_count"], "")
 tf.app.flags.DEFINE_integer("multi_cate_field_count", parse_feats_dict["multi_cate_field_count"], "")
 tf.app.flags.DEFINE_list("multi_cate_field_list", parse_feats_dict["multi_cate_field_list"], "")
-tf.app.flags.DEFINE_integer("total_field_count", parse_feats_dict["total_field_count"], "")
 tf.app.flags.DEFINE_list("target_att_1vN_list", parse_feats_dict["target_att_1vN_list"], "")
 tf.app.flags.DEFINE_list("target_att_NvN_list", parse_feats_dict["target_att_NvN_list"], "")
+tf.app.flags.DEFINE_integer("user_cont_field_count", parse_feats_dict["user_cont_field_count"], "")
+tf.app.flags.DEFINE_integer("user_cate_field_count", parse_feats_dict["user_cate_field_count"], "")
+tf.app.flags.DEFINE_integer("item_cont_field_count", parse_feats_dict["item_cont_field_count"], "")
+tf.app.flags.DEFINE_integer("item_cate_field_count", parse_feats_dict["item_cate_field_count"], "")
 # ------------model special parameters-----------
-# dssm
-tf.app.flags.DEFINE_integer("user_field_size", 0, "Number of fields")
-tf.app.flags.DEFINE_integer("item_field_size", 0, "Number of fields")
 # autoint
 tf.app.flags.DEFINE_integer("autoint_layer_count", 2, "")
 tf.app.flags.DEFINE_integer("autoint_emb_size", 16, "")
@@ -118,17 +119,26 @@ def main(_):
         model = dinfm.model_estimator(FLAGS)
     elif FLAGS.alg_name == "autoint":
         model = autoint.model_estimator(FLAGS)
+    elif FLAGS.alg_name == "dssm":
+        model = dssm.model_estimator(FLAGS)
     else:
         print("ERROR!!! alg_name = %s is not exit!" % FLAGS.alg_name)
         exit(-1)
 
     if FLAGS.task_mode == "train":
         # model.evaluate(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS))
-        model.train(input_fn=lambda: data_load.input_fn(FLAGS.train_data, FLAGS))
-        model_op.model_save_pb(FLAGS, model)
+        if FLAGS.alg_name == "dssm":
+            model.train(input_fn=lambda: data_load_dssm.input_fn(FLAGS.train_data, FLAGS))
+            model_op.model_save_pb_dssm(FLAGS, model)
+        else:
+            model.train(input_fn=lambda: data_load.input_fn(FLAGS.train_data, FLAGS))
+            model_op.model_save_pb(FLAGS, model)
 
     elif FLAGS.task_mode == "eval":
-        model.evaluate(input_fn=lambda: data_load.input_fn(FALGS.eval_data, FLAGS))
+        if FLAGS.alg_name == "dssm":
+            model.evaluate(input_fn=lambda: data_load_dssm.input_fn(FALGS.eval_data, FLAGS))
+        else:
+            model.evaluate(input_fn=lambda: data_load.input_fn(FALGS.eval_data, FLAGS))
 
     elif FLAGS.task_mode == "infer":
         # preds = model.predict(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS), predict_keys=["item_embedding"])

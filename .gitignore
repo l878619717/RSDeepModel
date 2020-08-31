@@ -5,6 +5,8 @@
 model_save_dir
 model_save_pb
 demo-*-500M
+main_local_test.py
+rsdeepmodel.tar
 
 # Python:
 *.py[cod]

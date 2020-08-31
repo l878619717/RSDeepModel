@@ -60,3 +60,20 @@ def model_save_pb(params, model):
         serving_input_receiver_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(features)
 
     return model.export_savedmodel(params.model_pb, serving_input_receiver_fn)
+
+
+def model_save_pb_dssm(params, model):
+    features = {
+        'user_cate_feats': tf.FixedLenFeature([params.user_cate_field_count], tf.int64),
+        'item_cont_feats': tf.FixedLenFeature([params.item_cont_field_count], tf.float32),
+        'item_cate_feats': tf.FixedLenFeature([params.item_cate_field_count], tf.int64)
+    }
+    for field_name in params.multi_cate_field_list:
+        features[field_name[0]] = tf.VarLenFeature(tf.int64)
+
+    if params.model_pb_type == 'parsing':
+        serving_input_receiver_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(features)
+    elif params.model_pb_type == 'raw':
+        serving_input_receiver_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(features)
+
+    return model.export_savedmodel(params.model_pb, serving_input_receiver_fn)

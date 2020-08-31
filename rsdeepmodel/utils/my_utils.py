@@ -69,6 +69,11 @@ def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
     multi_cate_field_count = 0
     multi_cate_field_list = list()  # [(multi_cate_feat_name, topN)]
     total_field_count = 0
+    # dssm
+    user_cont_field_count = 0
+    user_cate_field_count = 0
+    item_cont_field_count = 0
+    item_cate_field_count = 0
     # target-attention
     target_att_alg_name = ['din', 'dinfm']
     target_att_item_single = dict()  # {attention-id: item-index}  single_cate_feats(e.g. item_cat1) was merged into one column named 'cate_feats', so we need record the index
@@ -125,11 +130,25 @@ def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
                             feat_type = col_name.split('_')[0]
                             if feat_type == "item":
                                 target_att_item_single[att_id] = cate_field_count
-
+                        # dssm
+                        if alg_name == 'dssm':
+                            feat_type = col_name.split('_')[0]
+                            if feat_type == "item" and '#' not in col_name:  # '#' not in col_name是为了过滤user和item的交叉特征'#'
+                                item_cate_field_count += 1
+                            if feat_type == "user" and '#' not in col_name:
+                                user_cate_field_count += 1
                         # single_cate_feats
                         cate_field_count += 1
 
                     elif result_type == 'float':  # cont
+                        # dssm cont
+                        if alg_name == 'dssm':
+                            feat_type = col_name.split('_')[0]
+                            if feat_type == "item":
+                                item_cont_field_count += 1
+                            if feat_type == "user":
+                                user_cont_field_count += 1
+                        # cont
                         cont_field_count += 1
                     else:
                         print("%s is error!!!" % line_data)
@@ -145,6 +164,11 @@ def parse_feats_conf(conf_path, alg_name):  # 解析配置文件
     parse_feats_dict["multi_cate_field_count"] = multi_cate_field_count
     parse_feats_dict["multi_cate_field_list"] = multi_cate_field_list
     parse_feats_dict["total_field_count"] = total_field_count
+    # dssm
+    parse_feats_dict["user_cont_field_count"] = user_cont_field_count
+    parse_feats_dict["user_cate_field_count"] = user_cate_field_count
+    parse_feats_dict["item_cont_field_count"] = item_cont_field_count
+    parse_feats_dict["item_cate_field_count"] = item_cate_field_count
     # target-attention
     for k, v in target_att_user.items():
         if k in target_att_item_single.keys():
