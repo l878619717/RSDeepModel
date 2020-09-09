@@ -3,7 +3,7 @@
 import tensorflow as tf
 import shutil
 from utils import my_utils, data_load, model_op, data_load_dssm
-from models import dnn, deepfm, din, dinfm, autoint, dssm
+from models import dnn, deepfm, din, dinfm, autoint, dssm, autointFM
 
 #################### CMD Arguments ####################
 FLAGS = tf.app.flags.FLAGS
@@ -12,17 +12,17 @@ tf.app.flags.DEFINE_string("dt", "", "date")
 tf.app.flags.DEFINE_string("alg_name", "deepfm", "algorithm name")
 tf.app.flags.DEFINE_string("task_mode", "train", "task mode type {train, eval, infer, debug}")
 tf.app.flags.DEFINE_integer("epochs", 1, "epochs of training")
-tf.app.flags.DEFINE_integer("batch_size", 64, "Number of batch size")
-tf.app.flags.DEFINE_integer("embedding_size", 16, "Embedding size")
+tf.app.flags.DEFINE_integer("batch_size", 1024, "Number of batch size")
+tf.app.flags.DEFINE_integer("embedding_size", 32, "Embedding size")
 tf.app.flags.DEFINE_integer("cate_emb_space_size", 9000000, "emb space")
 tf.app.flags.DEFINE_string("optimizer", "Adam", "optimizer type {Adam, Adagrad, GD, Momentum}")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 tf.app.flags.DEFINE_integer("learning_rate_decay_steps", 10000000, "")
 tf.app.flags.DEFINE_float("learning_rate_decay_rate", 0.9, "")
-tf.app.flags.DEFINE_float("l2_reg", 0.00001, "")
+tf.app.flags.DEFINE_float("l2_reg", 0.01, "")
 tf.app.flags.DEFINE_integer("log_step_count_steps", 100, "")
-tf.app.flags.DEFINE_list("hidden_units", "512,256,128", "the layers of dnn")
-tf.app.flags.DEFINE_list("dropout", "0.8,0.8,0.8", "dropout rate")
+tf.app.flags.DEFINE_list("hidden_units", "512,256,256,128", "the layers of dnn")
+tf.app.flags.DEFINE_list("dropout", "0.8,0.8,0.8,0.8", "dropout rate")
 # ----------------device-----------------
 tf.app.flags.DEFINE_integer("is_GPU", 1, "use GPU or not, 1->yes, 0->no")
 tf.app.flags.DEFINE_integer("num_cpu", 20, "Number of CPU")
@@ -101,7 +101,7 @@ def main(_):
     handle_arguments()
     check_arguments()
 
-    if FLAGS.clear_existing_model_dir:
+    if FLAGS.clear_existing_model_dir and FLAGS.task_mode == 'train':
         try:
             shutil.rmtree(FLAGS.model_dir)
         except Exception as e:
@@ -121,24 +121,28 @@ def main(_):
         model = autoint.model_estimator(FLAGS)
     elif FLAGS.alg_name == "dssm":
         model = dssm.model_estimator(FLAGS)
+    elif FLAGS.alg_name == "autointFM":
+        model = autointFM.model_estimator(FLAGS)
     else:
         print("ERROR!!! alg_name = %s is not exit!" % FLAGS.alg_name)
         exit(-1)
 
     if FLAGS.task_mode == "train":
-        # model.evaluate(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS))
         if FLAGS.alg_name == "dssm":
             model.train(input_fn=lambda: data_load_dssm.input_fn(FLAGS.train_data, FLAGS))
             model_op.model_save_pb_dssm(FLAGS, model)
         else:
             model.train(input_fn=lambda: data_load.input_fn(FLAGS.train_data, FLAGS))
             model_op.model_save_pb(FLAGS, model)
+        eval_result = model.evaluate(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS))
+        print('eval-auc=%.5f\t loss=%.5f\t' % (eval_result['auc'], eval_result['loss']))
 
     elif FLAGS.task_mode == "eval":
         if FLAGS.alg_name == "dssm":
-            model.evaluate(input_fn=lambda: data_load_dssm.input_fn(FALGS.eval_data, FLAGS))
+            eval_result = model.evaluate(input_fn=lambda: data_load_dssm.input_fn(FLAGS.eval_data, FLAGS))
         else:
-            model.evaluate(input_fn=lambda: data_load.input_fn(FALGS.eval_data, FLAGS))
+            eval_result = model.evaluate(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS))
+        print('eval-auc=%.5f\t loss=%.5f\t' % (eval_result['auc'], eval_result['loss']))
 
     elif FLAGS.task_mode == "infer":
         # preds = model.predict(input_fn=lambda: data_load.input_fn(FLAGS.eval_data, FLAGS), predict_keys=["item_embedding"])
@@ -164,7 +168,7 @@ def main(_):
         pass
 
     else:
-        print("Task_mode Error!")
+        print("task_mode Error!")
 
 
 if __name__ == "__main__":
