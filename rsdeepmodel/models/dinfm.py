@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 '''
-dinfm是自命名，即在deepfm的基础上加入了target-attention
+dinfm是自命名，即在deepfm的基础上加入了target-attention, 使用target-attention默认数据格式为dense
 '''
 import tensorflow as tf
 import utils.model_layer as my_layer

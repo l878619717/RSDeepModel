@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+
+'''
+使用target-attention默认数据格式为dense
+'''
 import tensorflow as tf
 
 import utils.model_layer as my_layer
