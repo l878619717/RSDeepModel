@@ -2,6 +2,8 @@
 
 深度学习模型（推荐场景CTR预估为背景）, 使用estimator进行封装, 包括dnn、deepfm、din、dinfm、autoint等模型.
 
+如果对模型使用细节、算法理论感兴趣，可以看看这篇个人博客，欢迎讨论——https://tech.rstalker.com/model/deeplearning.html 
+
 | -          | version          |
 | ---------- | ---------------- |
 | Python     | 3.6或更高版本    |
