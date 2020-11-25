@@ -41,7 +41,7 @@ def tower(input_emb, params, w_name_input):
     return out
 
 
-def model_fn(labels, features, mode, params):
+def model_fn(features, labels, mode, params):
     tf.set_random_seed(2020)
 
     item_cont_feats = features["item_cont_feats"]
